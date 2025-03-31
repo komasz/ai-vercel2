@@ -1,11 +1,10 @@
 import OpenAI from 'openai';
 import { Pinecone } from '@pinecone-database/pinecone';
-import { depilacjaSiteDb } from './libs/database';
 import { OpenAIMessageEventData, ParsedArgs } from './types';
 import WebSocket from 'ws';
 
-const indexName = 'depilacja-v2';
-const model = 'text-embedding-ada-002';
+const indexName = 'depilacja-test-n8n';
+const model = 'text-embedding-3-small';
 
 export async function handleRagSearch(
   message: OpenAIMessageEventData,
@@ -21,18 +20,19 @@ export async function handleRagSearch(
     encoding_format: 'float',
   });
   const index = pc.index(indexName);
-  const response = await index.namespace('ns1').query({
+  const response = await index.namespace('Blog').query({
     vector: embedding.data[0].embedding,
-    topK: 5,
+    topK: 7,
+    includeMetadata: true
   });
   const texts: string[] = [];
   for (const j of response.matches) {
-    const index = await depilacjaSiteDb.getIndex('/depilacja', j.id);
-    const site: { url: string; content: string } =
-      await depilacjaSiteDb.getObject(`/depilacja/${index}`);
+    console.log(j);
+    // const index = await depilacjaSiteDb.getIndex('/depilacja', j.id);
+    // const site: { url: string; content: string } =
+    //   await depilacjaSiteDb.getObject(`/depilacja/${index}`);
     texts.push(`
-      URL: ${site.url}
-      CONTENT: ${site.content}
+      Zawartość artykułu: ${j.metadata?.text}
     `);
   }
   const textAppend = {

@@ -9,9 +9,12 @@ export enum OpenAIMessageEventType {
 
 export enum ToolFunctionName {
   RagSearch = 'rag_search',
+  SalonSearch = 'salon_search',
+  OfferSearch = 'offer_search',
   BookMeeting = 'bookMeeting',
   CheckAvailability = 'checkAvailability',
   ValidateMeetingDetails = 'validateMeetingDetails',
+  PhoneNumber = 'PhoneNumber',
 }
 
 export interface FunctionCallOutputItem {
@@ -73,5 +76,6 @@ export interface ParsedArgs {
   typZabiegu?: string;
   phone?: string;
   email?: string;
+  phone_number?: string;
   confirm?: boolean;
 }

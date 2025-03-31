@@ -27,14 +27,14 @@ export const bookMeetingTool = {
         type: 'string',
         description:
           'Numer telefonu klienta. Musi składać się **dokładnie** z 9 cyfr, bez spacji ani znaków specjalnych.',
-        pattern: '^\\d{9}$',
+        pattern: '^[0-9]{9}$',
       },
-      email: {
-        type: 'string',
-        description:
-          'Adres email klienta. Musi być w poprawnym formacie (np. użytkownik@domena.com).',
-        pattern: '^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$',
-      },
+      //email: {
+      //  type: 'string',
+      //  description:
+      //   'Adres email klienta. Musi być w poprawnym formacie (np. użytkownik@domena.com).',
+      //pattern: '/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+[.][a-zA-Z]{2,}$/gm',
+      //},
     },
     required: [
       'firstName',
@@ -42,7 +42,7 @@ export const bookMeetingTool = {
       'meetingDate',
       'typZabiegu',
       'phone',
-      'email',
+      //'email',
     ],
   },
 };

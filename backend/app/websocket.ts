@@ -1,21 +1,27 @@
-import WebSocket from 'ws';
-import { OpenAIMessageEventType, OpenAIMessageEventData } from './types';
-import { Socket } from 'socket.io';
-import { sessionUpdate } from './sessionConfiguration/config';
 import { Pinecone } from '@pinecone-database/pinecone';
 import OpenAI from 'openai';
-import { ParsedArgs, ToolFunctionName } from './types';
+import { Socket } from 'socket.io';
+import WebSocket from 'ws';
 import { handleCheckAvailability } from './checkAvailability';
-import { handleRagSearch } from './ragSearch';
+import { convertPhoneNumberToWords } from './convertPhoneNumberToWords';
 import { handleBookMeeting } from './libs/nylas/meetingHandler';
-import { bookMeetingTool } from './sessionConfiguration/tools/bookMeeting';
-import { validateMeetingDetailsTool } from './sessionConfiguration/tools/validateMeetingDetails';
+import { handleRagSearch } from './ragSearch';
+import { handleSalonSearch } from './salonSearch';
+import { handleOfferSearch } from './offerSearch';
+import { sessionUpdate } from './sessionConfiguration/config';
+import {
+  OpenAIMessageEventData,
+  OpenAIMessageEventType,
+  ParsedArgs,
+  ToolFunctionName,
+} from './types';
+import { salonSearchResponseInstructions } from './sessionConfiguration/salonSearchResponseInstructions';
 
 /**
  * @function createOpenAiWebSocket
- * @description This function establishes a WebSocket connection to the OpenAI Realtime API, enabling real-time communication between the client and the AI. 
+ * @description This function establishes a WebSocket connection to the OpenAI Realtime API, enabling real-time communication between the client and the AI.
  *              It handles various types of messages and events, facilitating a two-step booking process and other interactions.
- *              
+ *
  *              Key functionalities include:
  *              - Establishing a WebSocket connection and sending initial session configuration.
  *              - Handling different message types from the OpenAI API, such as audio transcription completion, speech start, content part completion, and function call arguments.
@@ -26,15 +32,15 @@ import { validateMeetingDetailsTool } from './sessionConfiguration/tools/validat
  *              - Handling errors and unknown function calls gracefully, ensuring robust communication.
  *
  * @param {Socket} socket - The client's socket connection.
- * @returns {object} - Returns the open WebSocket connection as `openAiWs`.
+ * @returns {WebSocket} - Returns the open WebSocket connection as `openAiWs`.
  */
-export function createOpenAiWebSocket(socket: Socket) {
+export function createOpenAiWebSocket(socket: Socket): { openAiWs: WebSocket } {
   const pc = new Pinecone({
     apiKey: process.env.PINECONE_API_KEY as string,
   });
   const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
   const openAiWs = new WebSocket(
-    'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview-2024-12-17',
+    'wss://api.openai.com/v1/realtime?model=gpt-4o-realtime-preview',
     {
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
@@ -50,7 +56,7 @@ export function createOpenAiWebSocket(socket: Socket) {
 
   openAiWs.on('message', async (data: string) => {
     const message: OpenAIMessageEventData = JSON.parse(data);
-    // console.log(message)
+    // console.log(message) //For debugging
     if (
       message.type ===
         OpenAIMessageEventType.ConversationItemInputAudioTranscriptionCompleted &&
@@ -77,7 +83,10 @@ export function createOpenAiWebSocket(socket: Socket) {
       message.type === OpenAIMessageEventType.ResponseAudioDelta &&
       message.delta
     ) {
-      console.log('Wojtek AI (audio delta) - response_id:', message.response_id);
+      console.log(
+        'Wojtek AI (audio delta) - response_id:',
+        message.response_id,
+      );
       socket.emit('audioResponse', message);
     }
 
@@ -93,49 +102,95 @@ export function createOpenAiWebSocket(socket: Socket) {
       );
 
       switch (functionName) {
-        case ToolFunctionName.CheckAvailability:
+        case ToolFunctionName.CheckAvailability: {
           await handleCheckAvailability(message, parsedArgs, openAiWs);
           return;
-
-        case ToolFunctionName.RagSearch:
+        }
+        case ToolFunctionName.RagSearch: {
           await handleRagSearch(message, parsedArgs, openAiWs, openai, pc);
           return;
-
-        case ToolFunctionName.ValidateMeetingDetails:
+        }
+        case ToolFunctionName.SalonSearch: {
+          await handleSalonSearch(message, parsedArgs, openAiWs);
+          return;
+        }
+        case ToolFunctionName.OfferSearch: {
+          await handleOfferSearch(message, parsedArgs, openAiWs);
+          return;
+        }
+        case ToolFunctionName.ValidateMeetingDetails: {
           console.log(
             'Received booking details, awaiting confirmation for:',
             parsedArgs.firstName,
             parsedArgs.lastName,
           );
+
           const objectAppend = {
             type: 'response.create',
             response: {
-              instructions: `Na podstawie konwersacji zadecyduj czy wypisać listę danych i zapytać uzytkownika o potwierdzenie tych danych czy rezerwować juz wizyte. Nigdy nie rezerwuj wizyty bez zdecydowanego potwierdzenia danych przez uzytkownika!
-              Dane: ${parsedArgs.toString()}`,
-              tools: [bookMeetingTool, validateMeetingDetailsTool],
-              temperature: 1.2,
+              instructions:
+                'Napisz uzytkownikowi dokładnie taką wiadomość: Poniżej wyświetlił się formularz. Proszę sprawdź, czy wszystkie dane są poprawne, a następnie potwierdź wizytę.',
             },
           };
           openAiWs.send(JSON.stringify(objectAppend));
+          socket.emit('confirmationMessage', parsedArgs);
           return;
-
-        case ToolFunctionName.BookMeeting:
+        }
+        case ToolFunctionName.BookMeeting: {
           const result = await handleBookMeeting(parsedArgs, message, socket);
           openAiWs.send(JSON.stringify(result));
+          return;
+        }
+        case ToolFunctionName.PhoneNumber: {
+          const phoneNumber = parsedArgs.phone_number;
+          console.log('PHONE NUMBER', phoneNumber);
 
-        default:
+          const outputSuccess = {
+            type: 'conversation.item.create',
+            item: {
+              type: 'function_call_output',
+              call_id: message.call_id,
+              output: JSON.stringify({
+                phone_number: convertPhoneNumberToWords(phoneNumber as string),
+                success: true,
+              }),
+            },
+          };
+
+          openAiWs.send(JSON.stringify(outputSuccess));
+          return;
+        }
+        default: {
           console.error('Unknown function call:', functionName);
+          break;
+        }
       }
     }
 
     if (
       message.type === OpenAIMessageEventType.ConversationItemCreated &&
       message.item?.type === 'function_call_output' &&
+      message.item.output &&
       JSON.parse(message.item.output).success
     ) {
-      const objectAppend = {
+      const args = JSON.parse(message.item.output);
+
+      let objectAppend;
+      objectAppend = {
         type: 'response.create',
       };
+
+      if (args.text) {
+        objectAppend = {
+          type: 'response.create',
+          response: {
+           // conversation: 'none',
+            instructions:
+              salonSearchResponseInstructions + 'Przeczytaj to:' + args.text,
+          },
+        };
+      }
+
       openAiWs.send(JSON.stringify(objectAppend));
     }
 

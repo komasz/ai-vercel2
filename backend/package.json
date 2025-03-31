@@ -8,7 +8,9 @@
     "dev": "nodemon app/index.ts",
     "format": "prettier --write .",
     "type-check": "tsc --project tsconfig.json",
-    "session-config": "npx ts-node app/generators/sessionConfig.ts"
+    "session-config": "npx ts-node app/generators/sessionConfig.ts",
+    "lint": "eslint .",
+    "check-all": "npm run type-check && npm run lint && npm run format"
   },
   "dependencies": {
     "@pinecone-database/pinecone": "^4.1.0",
@@ -25,9 +27,11 @@
   "devDependencies": {
     "@types/express": "^5.0.0",
     "@types/ws": "^8.5.13",
+    "eslint": "^8.0.0",
     "nodemon": "^3.1.0",
     "prettier": "^3.4.2",
     "ts-node": "^10.9.2",
+    "typescript-eslint": "^8.24.1",
     "typescript": "^5.7.3"
   }
 }

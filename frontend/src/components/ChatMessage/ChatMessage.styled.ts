@@ -5,7 +5,7 @@ import { theme } from '../../styles/theme';
 
 export const Motion = styled(motion.div)``;
 export const Conversation = styled.section`
-  height: 70vh;
+  height: 50vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
@@ -26,7 +26,6 @@ export const ConversationWrapper = styled.div<{ isBot: boolean }>`
 `;
 
 export const BotAnswerWrapper = styled.div`
-  width: 80%;
   max-width: 663px;
   display: flex;
   flex-direction: column;

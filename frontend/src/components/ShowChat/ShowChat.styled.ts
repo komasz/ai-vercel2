@@ -22,8 +22,11 @@ export const ChatIconButton = styled.button<{ isOpen: boolean }>`
         right: 10px; 
       `
       : `
-        bottom: 0; 
+        bottom: 20px; 
         right: 0;
+        @media (min-width: 768px) {
+            bottom: 0;
+        }
       `}
   z-index: 9999;
   border: none;

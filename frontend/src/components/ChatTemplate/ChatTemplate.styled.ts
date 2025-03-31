@@ -12,10 +12,17 @@ export const ChatWrapper = styled.section`
   width: calc(100dvw - 40px);
   height: 100dvh;
   display: flex;
+  gap: 20px;
   flex-direction: column;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 20px 20px;
+
+  @media (min-width: 768px) {
+    padding: 0 20px;
+  }
 `;
+
+export const InputWrapper = styled.div``;
 
 export const ChatHeader = styled.div`
   width: 100%;

@@ -18,6 +18,7 @@ export const WelcomeComponent = ({
     'Dlaczego trzeba golić włosy przed depilacją laserową?',
     'Co się stanie, jeśli nie zgolę włosów przed zabiegiem?',
     'Czemu nie można usuwać włosów woskiem przed laserem?',
+    'Chciałbym umówić się na depilacje nóg',
   ];
 
   const [randomTopics, setRandomTopics] = useState<string[]>([]);

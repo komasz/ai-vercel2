@@ -19,6 +19,6 @@ export const Dot = styled(motion.div)`
 
 export const DotContainer = styled.div`
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   max-width: ${theme.maxWidth};
 `;

@@ -33,7 +33,6 @@ export const ChatMessage: (props: ChatMessageProps) => ReactElement = ({
   message,
 }) => {
   const isBot = message.role === 'assistant';
-
   const fullContent =
     typeof message.content === 'string'
       ? message.content
@@ -41,6 +40,7 @@ export const ChatMessage: (props: ChatMessageProps) => ReactElement = ({
 
   const [displayedText, setDisplayedText] = useState('');
   const [textIndex, setTextIndex] = useState(0);
+
   const messageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {

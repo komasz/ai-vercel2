@@ -1,20 +1,17 @@
 import React, { useEffect, useRef, useState } from 'react';
-
+import { socket } from '../../services/socket';
 import { ChatInput } from '../ChatInput/ChatInput';
-
 import { ChatMessage } from '../ChatMessage/ChatMessage';
 import { Conversation } from '../ChatMessage/ChatMessage.styled';
-
 import { TypingIndicator } from '../Dots/Dots';
-
 import { WelcomeComponent } from '../WelcomeComponent/WelcomeComponent';
-
+import DataForm from '../DataForm/DataForm';
 import { useChat } from '../../hooks/useChat';
-
 import {
   ChatHeader,
   ChatLogo,
   ChatWrapper,
+  InputWrapper,
   Container,
 } from './ChatTemplate.styled';
 
@@ -24,6 +21,23 @@ export const Chat = () => {
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const [inputValue, setInputValue] = useState('');
   const [clearInput, setClearInput] = useState(false);
+  const [showDataForm, setShowDataForm] = useState(false);
+
+  const [formInitialData, setFormInitialData] = useState<{
+    firstName?: string;
+    lastName?: string;
+    typZabiegu?: string;
+    phone?: string;
+    email?: string;
+    meetingDate?: string;
+  }>({
+    firstName: '',
+    lastName: '',
+    typZabiegu: '',
+    phone: '',
+    email: '',
+    meetingDate: '',
+  });
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -47,7 +61,6 @@ export const Chat = () => {
       if (event.data.action === 'recommendationMessage') {
         const message = event.data.message;
         console.log(event.data, 'DATA CHAT');
-
         if (
           !messages.some(existingMessage => existingMessage.id === message.id)
         ) {
@@ -69,6 +82,64 @@ export const Chat = () => {
     }
   }, [clearInput]);
 
+  useEffect(() => {
+    const handleConfirmation = (data: any) => {
+      console.log('confirmationMessage received:', data);
+      setFormInitialData(data);
+      setShowDataForm(true);
+    };
+
+    socket.on('confirmationMessage', handleConfirmation);
+    return () => {
+      socket.off('confirmationMessage', handleConfirmation);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleBookingResult = (result: any) => {
+      console.log('Received bookingResult:', result);
+      try {
+        if (result && result.item && result.item.output) {
+          const parsedOutput = JSON.parse(result.item.output);
+          console.log('Parsed booking result:', parsedOutput);
+
+          if (
+            parsedOutput.success === true ||
+            parsedOutput.success === 'true'
+          ) {
+            setShowDataForm(false);
+          } else {
+            console.warn('Booking result indicates failure.');
+          }
+        } else {
+          console.warn(
+            'Booking result does not contain expected output:',
+            result,
+          );
+        }
+      } catch (e) {
+        console.error('Error parsing booking result:', e);
+      }
+    };
+
+    socket.on('bookingResult', handleBookingResult);
+    return () => {
+      socket.off('bookingResult', handleBookingResult);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleCloseModal = () => {
+      console.log('Received closeModal event');
+      setShowDataForm(false);
+    };
+
+    socket.on('closeModal', handleCloseModal);
+    return () => {
+      socket.off('closeModal', handleCloseModal);
+    };
+  }, []);
+
   return (
     <Container>
       <ChatWrapper>
@@ -77,7 +148,7 @@ export const Chat = () => {
           <h1 className="text-xl font-semibold">Chat</h1>
         </ChatHeader>
 
-        <div className="h-[600px] overflow-y-auto">
+        <div className="overflow-y-auto">
           {messages.length === 0 ? (
             <WelcomeComponent onCommonTopicClick={handleCommonTopicClick} />
           ) : (
@@ -101,13 +172,15 @@ export const Chat = () => {
           )}
           <div ref={messagesEndRef} />
         </div>
-
-        <ChatInput
-          onSendMessage={handleSendMessage}
-          disabled={isLoading}
-          initialValue={inputValue}
-          clearInput={clearInput}
-        />
+        <InputWrapper>
+          {showDataForm && <DataForm initialData={formInitialData} />}
+          <ChatInput
+            onSendMessage={handleSendMessage}
+            disabled={isLoading}
+            initialValue={inputValue}
+            clearInput={clearInput}
+          />
+        </InputWrapper>
       </ChatWrapper>
     </Container>
   );

@@ -14,7 +14,6 @@
     "@emotion/styled": "^11.14.0",
     "@heroicons/react": "^2.2.0",
     "cra-template-typescript": "1.2.0",
-    "dotenv": "^16.4.7",
     "mobx": "^6.13.5",
     "motion": "^11.18.0",
     "pcm-convert": "^1.6.5",

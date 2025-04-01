@@ -103,6 +103,8 @@ const AudioChat: React.FC<AudioChatProps> = ({
           sampleRate: 24000,
           channelCount: 1,
           echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
         },
       });
       mediaStream = stream;
@@ -147,6 +149,7 @@ const AudioChat: React.FC<AudioChatProps> = ({
 
   useEffect(() => {
     function handleAudioResponse(data: any) {
+      console.log(data.item_id)
       if (data.delta) {
         audioQueueManager.addAudioToQueue(data.delta);
       }

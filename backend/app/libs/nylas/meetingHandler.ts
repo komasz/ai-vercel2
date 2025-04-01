@@ -1,7 +1,14 @@
-import { Socket } from 'socket.io';
 import { nylas } from './nylasClient';
 import { checkDepilationAvailability } from './checkDepilationAvailability';
+import { Socket } from 'socket.io';
 
+/**
+ * @function handleBookMeeting
+ * @description Obsługuje rezerwację spotkania.
+ * @param parsedArgs - Dane rezerwacji (m.in. firstName, lastName, meetingDate itd.).
+ * @param message - Obiekt wiadomości (np. zawiera call_id).
+ * @returns Obiekt informujący o powodzeniu lub błędzie rezerwacji.
+ */
 export async function handleBookMeeting(
   parsedArgs: any,
   message: any,
@@ -50,7 +57,7 @@ export async function handleBookMeeting(
           call_id: message.call_id,
           output: JSON.stringify({
             success: 'false',
-            error: `Niestety podany termin jest juz zajęty: ${availabilityResult.conflicts}`,
+            error: `Niestety podany termin jest już zajęty: ${availabilityResult.conflicts}`,
           }),
         },
       };
@@ -69,11 +76,13 @@ export async function handleBookMeeting(
           startTime: Math.floor(startDate.getTime() / 1000),
           endTime: Math.floor(endDate.getTime() / 1000),
         },
-        // participants: [{
-        //   email: email,
-        //   name: `${firstName} ${lastName}`,
-        //   status: 'noreply'
-        // }]
+        participants: [
+          {
+            email: email,
+            name: `${firstName} ${lastName}`,
+            status: 'noreply',
+          },
+        ],
       },
     });
 
@@ -89,6 +98,7 @@ export async function handleBookMeeting(
         }),
       },
     };
+    socket.emit('closeModal');
     return outputSuccess;
   } catch (error: any) {
     console.error('Error booking meeting:', error);

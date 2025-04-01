@@ -3,17 +3,18 @@ import { ArrowUpIcon } from '@heroicons/react/24/solid';
 import { theme } from '../../styles/theme';
 
 export const FormContainer = styled.form<{ voiceEnabled?: boolean }>`
-  width: calc(50dvw - 100px);
+  width: calc(90dvw - 100px);
   margin: 20px 72px 24px auto;
   border-radius: 8px;
   bottom: 24px;
   right: 0;
   z-index: 100;
-
-  /* Jeżeli voiceEnabled = true → box-shadow: none,
-     w przeciwnym wypadku poprzedni cień */
   box-shadow: ${({ voiceEnabled }) =>
     voiceEnabled ? 'none' : '0px 16px 16px 0px rgba(0, 0, 0, 0.15)'};
+
+  @media (min-width: 768px) {
+    width: calc(50dvw - 100px);
+  }
 `;
 
 export const InputWrapper = styled.div`

@@ -1,5 +1,5 @@
 import { checkDepilationAvailability } from './libs/nylas/checkDepilationAvailability';
-import { OpenAIMessageEventData, ParsedArgs, ToolFunctionName } from './types';
+import { OpenAIMessageEventData, ParsedArgs } from './types';
 import WebSocket from 'ws';
 
 export async function handleCheckAvailability(

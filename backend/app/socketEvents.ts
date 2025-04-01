@@ -1,6 +1,8 @@
 import { Socket } from 'socket.io';
 import { createOpenAiWebSocket } from './websocket';
 import WebSocket from 'ws';
+import { bookMeetingTool } from './sessionConfiguration/tools/bookMeeting';
+import { ToolFunctionName } from './types';
 
 /**
  * @function handleSocketConnection
@@ -49,6 +51,25 @@ export function handleSocketConnection(socket: Socket) {
       openAiWs.send(JSON.stringify(textAppend));
     } else {
       console.error('WebSocket is not open. Cannot send text data.');
+    }
+  });
+
+  // Confirm data for bookMeeting.
+  socket.on('confirmData', async parsedArgs => {
+    if (openAiWs.readyState === WebSocket.OPEN) {
+      console.log('wyslane', parsedArgs);
+      const objectAppend = {
+        type: 'response.create',
+        response: {
+          instructions: `Wywołaj funckje bookMeeting z tymi danymi: ${JSON.stringify(parsedArgs)}`,
+          tools: [bookMeetingTool],
+          tool_choice: 'required',
+          temperature: 1.2,
+        },
+      };
+      openAiWs.send(JSON.stringify(objectAppend));
+    } else {
+      console.error('WebSocket is not open. Cannot confirm Data.');
     }
   });
 
